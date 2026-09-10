@@ -1,0 +1,6 @@
+step,action_id,action_name,before_confidence,after_confidence,confidence_reduction,success,reward,terminated,truncated
+1,0,none,0.547500214073807,0.547500214073807,0.0,False,0.0,False,False
+2,0,none,0.547500214073807,0.547500214073807,0.0,False,0.0,False,False
+3,0,none,0.547500214073807,0.547500214073807,0.0,False,0.0,False,False
+4,0,none,0.547500214073807,0.547500214073807,0.0,False,0.0,False,False
+5,6,resize,0.547500214073807,0.5475002557970583,-4.1723251298364517e-08,False,-4.1723251298364517e-08,False,True

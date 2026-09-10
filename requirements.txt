@@ -1,0 +1,8 @@
+numpy
+Pillow
+opencv-python
+matplotlib
+gymnasium
+stable-baselines3
+torch
+pytest
