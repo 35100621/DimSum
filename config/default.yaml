@@ -1,0 +1,33 @@
+project:
+  seed: 42
+  device: auto
+
+victim:
+  detector_name: xception
+  deepfakebench_root: ../DeepfakeBench
+  config_path: null
+  weights_path: null
+
+environment:
+  image_width: 224
+  image_height: 224
+  max_steps: 5
+  attack_target: fake_to_real
+  strength_levels: 5
+  quality_weight: 0.25
+  perturbation_weight: 0.10
+
+ppo:
+  learning_rate: 0.0003
+  n_steps: 256
+  batch_size: 64
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_range: 0.2
+  ent_coef: 0.01
+
+training:
+  total_timesteps: 10000
+
+evaluation:
+  save_images: false

@@ -26,3 +26,13 @@ class MockDetector:
         edge_strength = min(1.0, 4.0 * (horizontal_edges + vertical_edges))
         score = 0.15 + 0.70 * brightness + 0.15 * edge_strength
         return float(np.clip(score, 0.0, 1.0))
+
+    def predict_image(self, image: Image.Image) -> dict[str, str | float]:
+        """Return the same normalized dictionary as the real victim wrapper."""
+        fake_probability = self.predict(image)
+        real_probability = 1.0 - fake_probability
+        return {
+            "label": "FAKE" if fake_probability >= real_probability else "REAL",
+            "real_probability": real_probability,
+            "fake_probability": fake_probability,
+        }

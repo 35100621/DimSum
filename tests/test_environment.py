@@ -1,65 +1,63 @@
+from pathlib import Path
+
 import numpy as np
 import pytest
 from gymnasium import spaces
 from PIL import Image
 from stable_baselines3.common.env_checker import check_env
 
-from src.ppo.environment import DeepfakeAttackEnv
-from src.ppo.mock_detector import MockDetector
+from ppo.environment import DeepfakeAttackEnv
 
 
-class SequenceDetector:
-    def __init__(self, scores):
-        self.scores = iter(scores)
+class SequenceVictim:
+    def __init__(self, fake_probabilities):
+        self.probabilities = iter(fake_probabilities)
 
-    def predict(self, image):
-        return next(self.scores)
+    def predict_image(self, image):
+        fake = float(next(self.probabilities))
+        return {"label": "FAKE" if fake >= 0.5 else "REAL", "real_probability": 1.0 - fake, "fake_probability": fake}
+
+
+class ImageVictim:
+    def predict_image(self, image):
+        fake = float(np.asarray(image, dtype=float).mean() / 255.0)
+        return {"label": "FAKE" if fake >= 0.5 else "REAL", "real_probability": 1.0 - fake, "fake_probability": fake}
 
 
 @pytest.fixture
-def sample_image():
-    x = np.linspace(64, 224, 32, dtype=np.uint8)
-    pixels = np.tile(x, (24, 1))
-    return Image.fromarray(np.stack([pixels] * 3, axis=2), mode="RGB")
+def image_path(tmp_path: Path):
+    path = tmp_path / "fake.png"
+    Image.fromarray(np.full((32, 32, 3), 220, dtype=np.uint8)).save(path)
+    return path
 
 
-def test_reset_and_step_follow_gymnasium_api(sample_image):
-    env = DeepfakeAttackEnv(sample_image, MockDetector(), seed=42)
-    obs, info = env.reset()
-    transition = env.step(0)
-    assert obs.shape == (2,)
-    assert obs.dtype == np.float32
-    assert isinstance(info, dict)
-    assert isinstance(env.action_space, spaces.Discrete)
-    assert env.action_space.n == 7
-    assert len(transition) == 5
+def test_reset_and_step_contract(image_path):
+    env = DeepfakeAttackEnv([image_path], ImageVictim(), seed=42)
+    observation, reset_info = env.reset()
+    transition = env.step(np.array([0, 0]))
+    assert observation.shape == (6,) and observation.dtype == np.float32
+    assert env.observation_space.contains(observation)
+    assert isinstance(env.action_space, spaces.MultiDiscrete)
+    assert len(transition) == 5 and np.isfinite(transition[1])
+    assert isinstance(reset_info, dict)
+    required = {"image_path", "action_name", "strength", "step", "initial_fake_probability", "previous_fake_probability", "current_fake_probability", "current_real_probability", "ssim", "perturbation", "attack_success"}
+    assert required <= transition[4].keys()
 
 
-def test_successful_attack_terminates(sample_image):
-    env = DeepfakeAttackEnv(sample_image, SequenceDetector([0.9, 0.4]))
+def test_success_terminates(image_path):
+    env = DeepfakeAttackEnv([image_path], SequenceVictim([0.9, 0.4]))
     env.reset()
-    _, _, terminated, truncated, info = env.step(0)
-    assert terminated is True
-    assert truncated is False
-    assert info["success"] is True
+    _, reward, terminated, truncated, info = env.step(np.array([0, 0]))
+    assert terminated and not truncated and info["attack_success"] and reward > 1.0
 
 
-def test_max_steps_truncates_unsuccessful_episode(sample_image):
-    env = DeepfakeAttackEnv(sample_image, SequenceDetector([0.9, 0.8, 0.7]), max_steps=2)
+def test_max_steps_truncates(image_path):
+    env = DeepfakeAttackEnv([image_path], SequenceVictim([0.9, 0.8, 0.7]), max_steps=2)
     env.reset()
-    assert env.step(0)[3] is False
-    _, _, terminated, truncated, _ = env.step(0)
-    assert terminated is False
-    assert truncated is True
+    assert not env.step(np.array([0, 0]))[3]
+    _, _, terminated, truncated, _ = env.step(np.array([0, 0]))
+    assert not terminated and truncated
 
 
-@pytest.mark.parametrize("score", [-0.1, 1.1, float("nan"), "invalid"])
-def test_detector_output_is_validated(sample_image, score):
-    env = DeepfakeAttackEnv(sample_image, SequenceDetector([score]))
-    with pytest.raises(ValueError):
-        env.reset()
-
-
-def test_environment_passes_sb3_checker(sample_image):
-    env = DeepfakeAttackEnv(sample_image, MockDetector(), seed=42)
-    check_env(env, warn=True)
+def test_environment_passes_sb3_checker(image_path):
+    check_env(DeepfakeAttackEnv([image_path], ImageVictim(), seed=42), warn=True)
