@@ -1,0 +1,810 @@
+{
+  "dataset": "FF_small",
+  "split": "ppo_train",
+  "seed": 42,
+  "test_fraction": 0.2,
+  "dataset_root": "../../../DeepfakeBench_Handover/datasets/rgb/FF_small",
+  "source_dataset_root": "/Users/hgtan/Desktop/DeepfakeBench_Handover/datasets/rgb/FF_small",
+  "samples": [
+    {
+      "path": "fake/Deepfakes_0000.png",
+      "label": "FAKE",
+      "group": "Deepfakes"
+    },
+    {
+      "path": "fake/Deepfakes_0001.png",
+      "label": "FAKE",
+      "group": "Deepfakes"
+    },
+    {
+      "path": "fake/Deepfakes_0002.png",
+      "label": "FAKE",
+      "group": "Deepfakes"
+    },
+    {
+      "path": "fake/Deepfakes_0003.png",
+      "label": "FAKE",
+      "group": "Deepfakes"
+    },
+    {
+      "path": "fake/Deepfakes_0006.png",
+      "label": "FAKE",
+      "group": "Deepfakes"
+    },
+    {
+      "path": "fake/Deepfakes_0007.png",
+      "label": "FAKE",
+      "group": "Deepfakes"
+    },
+    {
+      "path": "fake/Deepfakes_0008.png",
+      "label": "FAKE",
+      "group": "Deepfakes"
+    },
+    {
+      "path": "fake/Deepfakes_0009.png",
+      "label": "FAKE",
+      "group": "Deepfakes"
+    },
+    {
+      "path": "fake/Deepfakes_0010.png",
+      "label": "FAKE",
+      "group": "Deepfakes"
+    },
+    {
+      "path": "fake/Deepfakes_0011.png",
+      "label": "FAKE",
+      "group": "Deepfakes"
+    },
+    {
+      "path": "fake/Deepfakes_0012.png",
+      "label": "FAKE",
+      "group": "Deepfakes"
+    },
+    {
+      "path": "fake/Deepfakes_0013.png",
+      "label": "FAKE",
+      "group": "Deepfakes"
+    },
+    {
+      "path": "fake/Deepfakes_0015.png",
+      "label": "FAKE",
+      "group": "Deepfakes"
+    },
+    {
+      "path": "fake/Deepfakes_0016.png",
+      "label": "FAKE",
+      "group": "Deepfakes"
+    },
+    {
+      "path": "fake/Deepfakes_0017.png",
+      "label": "FAKE",
+      "group": "Deepfakes"
+    },
+    {
+      "path": "fake/Deepfakes_0018.png",
+      "label": "FAKE",
+      "group": "Deepfakes"
+    },
+    {
+      "path": "fake/Face2Face_0000.png",
+      "label": "FAKE",
+      "group": "Face2Face"
+    },
+    {
+      "path": "fake/Face2Face_0001.png",
+      "label": "FAKE",
+      "group": "Face2Face"
+    },
+    {
+      "path": "fake/Face2Face_0002.png",
+      "label": "FAKE",
+      "group": "Face2Face"
+    },
+    {
+      "path": "fake/Face2Face_0004.png",
+      "label": "FAKE",
+      "group": "Face2Face"
+    },
+    {
+      "path": "fake/Face2Face_0005.png",
+      "label": "FAKE",
+      "group": "Face2Face"
+    },
+    {
+      "path": "fake/Face2Face_0006.png",
+      "label": "FAKE",
+      "group": "Face2Face"
+    },
+    {
+      "path": "fake/Face2Face_0007.png",
+      "label": "FAKE",
+      "group": "Face2Face"
+    },
+    {
+      "path": "fake/Face2Face_0009.png",
+      "label": "FAKE",
+      "group": "Face2Face"
+    },
+    {
+      "path": "fake/Face2Face_0010.png",
+      "label": "FAKE",
+      "group": "Face2Face"
+    },
+    {
+      "path": "fake/Face2Face_0012.png",
+      "label": "FAKE",
+      "group": "Face2Face"
+    },
+    {
+      "path": "fake/Face2Face_0013.png",
+      "label": "FAKE",
+      "group": "Face2Face"
+    },
+    {
+      "path": "fake/Face2Face_0015.png",
+      "label": "FAKE",
+      "group": "Face2Face"
+    },
+    {
+      "path": "fake/Face2Face_0016.png",
+      "label": "FAKE",
+      "group": "Face2Face"
+    },
+    {
+      "path": "fake/Face2Face_0017.png",
+      "label": "FAKE",
+      "group": "Face2Face"
+    },
+    {
+      "path": "fake/Face2Face_0018.png",
+      "label": "FAKE",
+      "group": "Face2Face"
+    },
+    {
+      "path": "fake/Face2Face_0019.png",
+      "label": "FAKE",
+      "group": "Face2Face"
+    },
+    {
+      "path": "fake/FaceShifter_0001.png",
+      "label": "FAKE",
+      "group": "FaceShifter"
+    },
+    {
+      "path": "fake/FaceShifter_0003.png",
+      "label": "FAKE",
+      "group": "FaceShifter"
+    },
+    {
+      "path": "fake/FaceShifter_0004.png",
+      "label": "FAKE",
+      "group": "FaceShifter"
+    },
+    {
+      "path": "fake/FaceShifter_0005.png",
+      "label": "FAKE",
+      "group": "FaceShifter"
+    },
+    {
+      "path": "fake/FaceShifter_0006.png",
+      "label": "FAKE",
+      "group": "FaceShifter"
+    },
+    {
+      "path": "fake/FaceShifter_0007.png",
+      "label": "FAKE",
+      "group": "FaceShifter"
+    },
+    {
+      "path": "fake/FaceShifter_0008.png",
+      "label": "FAKE",
+      "group": "FaceShifter"
+    },
+    {
+      "path": "fake/FaceShifter_0010.png",
+      "label": "FAKE",
+      "group": "FaceShifter"
+    },
+    {
+      "path": "fake/FaceShifter_0011.png",
+      "label": "FAKE",
+      "group": "FaceShifter"
+    },
+    {
+      "path": "fake/FaceShifter_0012.png",
+      "label": "FAKE",
+      "group": "FaceShifter"
+    },
+    {
+      "path": "fake/FaceShifter_0013.png",
+      "label": "FAKE",
+      "group": "FaceShifter"
+    },
+    {
+      "path": "fake/FaceShifter_0014.png",
+      "label": "FAKE",
+      "group": "FaceShifter"
+    },
+    {
+      "path": "fake/FaceShifter_0015.png",
+      "label": "FAKE",
+      "group": "FaceShifter"
+    },
+    {
+      "path": "fake/FaceShifter_0016.png",
+      "label": "FAKE",
+      "group": "FaceShifter"
+    },
+    {
+      "path": "fake/FaceShifter_0017.png",
+      "label": "FAKE",
+      "group": "FaceShifter"
+    },
+    {
+      "path": "fake/FaceShifter_0018.png",
+      "label": "FAKE",
+      "group": "FaceShifter"
+    },
+    {
+      "path": "fake/FaceSwap_0001.png",
+      "label": "FAKE",
+      "group": "FaceSwap"
+    },
+    {
+      "path": "fake/FaceSwap_0002.png",
+      "label": "FAKE",
+      "group": "FaceSwap"
+    },
+    {
+      "path": "fake/FaceSwap_0003.png",
+      "label": "FAKE",
+      "group": "FaceSwap"
+    },
+    {
+      "path": "fake/FaceSwap_0004.png",
+      "label": "FAKE",
+      "group": "FaceSwap"
+    },
+    {
+      "path": "fake/FaceSwap_0005.png",
+      "label": "FAKE",
+      "group": "FaceSwap"
+    },
+    {
+      "path": "fake/FaceSwap_0006.png",
+      "label": "FAKE",
+      "group": "FaceSwap"
+    },
+    {
+      "path": "fake/FaceSwap_0007.png",
+      "label": "FAKE",
+      "group": "FaceSwap"
+    },
+    {
+      "path": "fake/FaceSwap_0009.png",
+      "label": "FAKE",
+      "group": "FaceSwap"
+    },
+    {
+      "path": "fake/FaceSwap_0011.png",
+      "label": "FAKE",
+      "group": "FaceSwap"
+    },
+    {
+      "path": "fake/FaceSwap_0012.png",
+      "label": "FAKE",
+      "group": "FaceSwap"
+    },
+    {
+      "path": "fake/FaceSwap_0013.png",
+      "label": "FAKE",
+      "group": "FaceSwap"
+    },
+    {
+      "path": "fake/FaceSwap_0015.png",
+      "label": "FAKE",
+      "group": "FaceSwap"
+    },
+    {
+      "path": "fake/FaceSwap_0016.png",
+      "label": "FAKE",
+      "group": "FaceSwap"
+    },
+    {
+      "path": "fake/FaceSwap_0017.png",
+      "label": "FAKE",
+      "group": "FaceSwap"
+    },
+    {
+      "path": "fake/FaceSwap_0018.png",
+      "label": "FAKE",
+      "group": "FaceSwap"
+    },
+    {
+      "path": "fake/FaceSwap_0019.png",
+      "label": "FAKE",
+      "group": "FaceSwap"
+    },
+    {
+      "path": "fake/NeuralTextures_0000.png",
+      "label": "FAKE",
+      "group": "NeuralTextures"
+    },
+    {
+      "path": "fake/NeuralTextures_0001.png",
+      "label": "FAKE",
+      "group": "NeuralTextures"
+    },
+    {
+      "path": "fake/NeuralTextures_0002.png",
+      "label": "FAKE",
+      "group": "NeuralTextures"
+    },
+    {
+      "path": "fake/NeuralTextures_0003.png",
+      "label": "FAKE",
+      "group": "NeuralTextures"
+    },
+    {
+      "path": "fake/NeuralTextures_0004.png",
+      "label": "FAKE",
+      "group": "NeuralTextures"
+    },
+    {
+      "path": "fake/NeuralTextures_0005.png",
+      "label": "FAKE",
+      "group": "NeuralTextures"
+    },
+    {
+      "path": "fake/NeuralTextures_0006.png",
+      "label": "FAKE",
+      "group": "NeuralTextures"
+    },
+    {
+      "path": "fake/NeuralTextures_0007.png",
+      "label": "FAKE",
+      "group": "NeuralTextures"
+    },
+    {
+      "path": "fake/NeuralTextures_0008.png",
+      "label": "FAKE",
+      "group": "NeuralTextures"
+    },
+    {
+      "path": "fake/NeuralTextures_0010.png",
+      "label": "FAKE",
+      "group": "NeuralTextures"
+    },
+    {
+      "path": "fake/NeuralTextures_0014.png",
+      "label": "FAKE",
+      "group": "NeuralTextures"
+    },
+    {
+      "path": "fake/NeuralTextures_0015.png",
+      "label": "FAKE",
+      "group": "NeuralTextures"
+    },
+    {
+      "path": "fake/NeuralTextures_0016.png",
+      "label": "FAKE",
+      "group": "NeuralTextures"
+    },
+    {
+      "path": "fake/NeuralTextures_0017.png",
+      "label": "FAKE",
+      "group": "NeuralTextures"
+    },
+    {
+      "path": "fake/NeuralTextures_0018.png",
+      "label": "FAKE",
+      "group": "NeuralTextures"
+    },
+    {
+      "path": "fake/NeuralTextures_0019.png",
+      "label": "FAKE",
+      "group": "NeuralTextures"
+    },
+    {
+      "path": "real/actor_real_0001.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0002.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0003.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0004.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0005.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0007.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0008.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0009.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0011.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0012.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0013.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0015.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0016.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0020.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0021.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0024.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0025.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0026.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0027.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0028.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0029.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0031.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0032.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0033.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0034.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0035.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0036.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0037.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0038.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0039.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0040.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0041.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0042.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0043.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0044.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0045.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0046.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0047.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0048.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/actor_real_0049.png",
+      "label": "REAL",
+      "group": "actor_real"
+    },
+    {
+      "path": "real/youtube_real_0000.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0001.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0002.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0003.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0004.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0006.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0007.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0008.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0009.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0010.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0011.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0012.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0014.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0015.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0016.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0018.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0019.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0020.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0021.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0023.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0025.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0026.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0029.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0030.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0031.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0032.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0033.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0034.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0035.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0036.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0038.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0039.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0040.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0042.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0043.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0044.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0045.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0046.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0047.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    },
+    {
+      "path": "real/youtube_real_0049.png",
+      "label": "REAL",
+      "group": "youtube_real"
+    }
+  ]
+}

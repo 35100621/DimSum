@@ -8,4 +8,6 @@ scikit-image
 PyYAML
 pandas
 matplotlib
+scikit-learn
+tensorboard
 pytest
