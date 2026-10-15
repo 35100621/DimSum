@@ -398,6 +398,18 @@ mean PSNR 31.66 dB, and mean L1 distortion 0.00822. All final images met the har
 constraint; 59 attempted PGD actions were rejected across 40 episodes. See
 `docs/expanded_quality_ppo_evaluation.md`.
 
+### Detector Accuracy Reduction
+
+Using the same fixed 40-image held-out set, frozen Xception achieved 29/40 correct
+(72.5%) before attack. After keeping all 20 REAL samples unchanged and substituting
+the saved Quality-PPO outputs for all 20 FAKE samples, it achieved 15/40 correct
+(37.5%). The detector accuracy therefore fell by **35.0 percentage points**.
+
+The clean confusion matrix is `[[13, 7], [4, 16]]`; the after-attack matrix is
+`[[13, 7], [18, 2]]`, with rows and columns ordered REAL, FAKE. Accuracy uses all
+40 images, while ASR remains 14/16 (87.5%) over originally correct FAKE images.
+See `docs/detector_accuracy_reduction.md`.
+
 ### Larger-scale validation
 
 - Only `FF_small` has been used.
