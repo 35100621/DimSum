@@ -43,16 +43,16 @@ print(f"Project root: {PROJECT_ROOT}")"""
 
 
 write("01_detector_setup.ipynb", [
-    markdown("# 01 — DeepfakeBench Xception setup\n\nConfigure the three paths below. The model is loaded once by `VictimDetector`, which also owns resizing and normalization. Leave `RUN_DETECTOR = False` to validate imports without external weights."),
+    markdown("# 01 — DeepfakeBench Xception setup\n\nThis notebook uses the extracted handover. The model is loaded once by `VictimDetector`, which owns the teammate's exact preprocessing and returns normalized REAL/FAKE probabilities."),
     code(SETUP),
     code("""from victim.detector import VictimDetector
 
-DEEPFAKEBENCH_ROOT = PROJECT_ROOT.parent / "DeepfakeBench"
+DEEPFAKEBENCH_ROOT = PROJECT_ROOT.parent / "DeepfakeBench_Handover"
 XCEPTION_CONFIG = DEEPFAKEBENCH_ROOT / "training/config/detector/xception.yaml"
 XCEPTION_WEIGHTS = DEEPFAKEBENCH_ROOT / "training/weights/xception_best.pth"
-SAMPLE_IMAGE = PROJECT_ROOT / "data/test/sample.jpg"
-DEVICE = "auto"
-RUN_DETECTOR = False"""),
+SAMPLE_IMAGE = DEEPFAKEBENCH_ROOT / "datasets/rgb/FF_small/fake/Deepfakes_0000.png"
+DEVICE = "cpu"
+RUN_DETECTOR = True"""),
     code("""for label, path in {
     "DeepfakeBench": DEEPFAKEBENCH_ROOT,
     "Xception config": XCEPTION_CONFIG,
@@ -147,70 +147,49 @@ print("Reward direction: positive confidence gain means P(FAKE) decreased.")""")
 
 
 write("04_ppo_training.ipynb", [
-    markdown("# 04 — PPO training\n\nThe default smoke path trains against a mock victim and writes `outputs/checkpoints/ppo_notebook_smoke.zip`. Switch `USE_MOCK` off and configure the paths to train against DeepfakeBench Xception."),
+    markdown("# 04 — PPO training\n\nThe default path runs a short end-to-end PPO integration against the frozen Xception victim using only labelled FAKE images from the training manifest. It writes an integration checkpoint, not a final experimental model. Set `FULL_TRAINING=True` for the configured 10,000-timestep run."),
     code(SETUP),
-    code("""USE_MOCK = True
-TRAIN_DIR = PROJECT_ROOT / "data/train"
-DEEPFAKEBENCH_ROOT = PROJECT_ROOT.parent / "DeepfakeBench"
+    code("""FULL_TRAINING = False
+TRAIN_MANIFEST = PROJECT_ROOT / "data/splits/ff_ppo_train.json"
+DEEPFAKEBENCH_ROOT = PROJECT_ROOT.parent / "DeepfakeBench_Handover"
 XCEPTION_WEIGHTS = DEEPFAKEBENCH_ROOT / "training/weights/xception_best.pth"
-TIMESTEPS = 32 if USE_MOCK else 10_000
+TIMESTEPS = 10_000 if FULL_TRAINING else 64
+OUTPUT_DIR = PROJECT_ROOT / ("outputs" if FULL_TRAINING else "outputs/integration_smoke")
 SEED = 42
-DEVICE = "auto"
+DEVICE = "cpu"
 """),
-    code("""if USE_MOCK:
-    import numpy as np
-    from PIL import Image
-    from ppo.agent import create_ppo_agent
-    from ppo.environment import DeepfakeAttackEnv
-    from src.ppo.mock_detector import MockDetector
+    code("""from ppo.train import train_attack
 
-    demo_dir = PROJECT_ROOT / "outputs/notebook_demo/train"
-    demo_dir.mkdir(parents=True, exist_ok=True)
-    paths = []
-    for index, level in enumerate((160, 190, 220)):
-        path = demo_dir / f"synthetic_{index}.png"
-        Image.fromarray(np.full((64, 64, 3), level, dtype=np.uint8)).save(path)
-        paths.append(path)
-    env = DeepfakeAttackEnv(paths, MockDetector(), max_steps=3, seed=SEED)
-    model = create_ppo_agent(env, seed=SEED, device=DEVICE, n_steps=16, batch_size=8, verbose=0)
-    model.learn(total_timesteps=TIMESTEPS)
-    checkpoint = PROJECT_ROOT / "outputs/checkpoints/ppo_notebook_smoke"
-    checkpoint.parent.mkdir(parents=True, exist_ok=True)
-    model.save(checkpoint)
-    print(checkpoint.with_suffix(".zip"))
-else:
-    from ppo.train import train_attack
-    checkpoint = train_attack(
-        train_dir=TRAIN_DIR,
-        deepfakebench_root=DEEPFAKEBENCH_ROOT,
-        weights_path=XCEPTION_WEIGHTS,
-        timesteps=TIMESTEPS,
-        seed=SEED,
-        device=DEVICE,
-        output_dir=PROJECT_ROOT / "outputs",
-    )
-    print(checkpoint)"""),
-    code("""observation, _ = env.reset(seed=SEED) if USE_MOCK else (None, None)
-if USE_MOCK:
-    action, _ = model.predict(observation, deterministic=True)
-    print("deterministic action [type, strength]:", action)
-    assert env.action_space.contains(action)"""),
+checkpoint = train_attack(
+    train_dir=None,
+    train_manifest=TRAIN_MANIFEST,
+    deepfakebench_root=DEEPFAKEBENCH_ROOT,
+    weights_path=XCEPTION_WEIGHTS,
+    timesteps=TIMESTEPS,
+    seed=SEED,
+    device=DEVICE,
+    output_dir=OUTPUT_DIR,
+)
+print(checkpoint)"""),
+    code("""assert checkpoint.is_file()
+print("Integration training complete." if not FULL_TRAINING else "Full PPO training complete.")
+print("Training and held-out test manifests are disjoint.")"""),
 ])
 
 
 write("05_evaluation.ipynb", [
-    markdown("# 05 — Held-out evaluation\n\nEvaluation never updates PPO. It uses deterministic actions and reports attack success only for images initially classified FAKE. Configure the paths, keep the test directory separate from training, and set `RUN_EVALUATION=True`."),
+    markdown("# 05 — Held-out evaluation\n\nEvaluation never updates PPO. It uses deterministic actions on the disjoint test manifest. Attack success rate counts only ground-truth FAKE images that Xception initially detects as FAKE. The default checkpoint is the short integration model and its metrics are a pipeline check, not final experimental results."),
     code(SETUP),
     code("""from evaluation.evaluate_attack import evaluate_attack
 
-TEST_DIR = PROJECT_ROOT / "data/test"
-MODEL_PATH = PROJECT_ROOT / "outputs/checkpoints/ppo_final.zip"
-DEEPFAKEBENCH_ROOT = PROJECT_ROOT.parent / "DeepfakeBench"
+TEST_MANIFEST = PROJECT_ROOT / "data/splits/ff_test.json"
+MODEL_PATH = PROJECT_ROOT / "outputs/integration_smoke/checkpoints/ppo_final.zip"
+DEEPFAKEBENCH_ROOT = PROJECT_ROOT.parent / "DeepfakeBench_Handover"
 XCEPTION_WEIGHTS = DEEPFAKEBENCH_ROOT / "training/weights/xception_best.pth"
-OUTPUT_DIR = PROJECT_ROOT / "outputs/evaluation"
-RUN_EVALUATION = False"""),
+OUTPUT_DIR = PROJECT_ROOT / "outputs/integration_smoke_evaluation"
+RUN_EVALUATION = True"""),
     code("""for label, path in {
-    "held-out images": TEST_DIR,
+    "held-out manifest": TEST_MANIFEST,
     "PPO checkpoint": MODEL_PATH,
     "DeepfakeBench": DEEPFAKEBENCH_ROOT,
     "Xception weights": XCEPTION_WEIGHTS,
@@ -218,18 +197,19 @@ RUN_EVALUATION = False"""),
     print(f"{label:18s} {path}  exists={path.exists()}")"""),
     code("""if RUN_EVALUATION:
     summary = evaluate_attack(
-        test_dir=TEST_DIR,
+        test_dir=None,
+        test_manifest=TEST_MANIFEST,
         model_path=MODEL_PATH,
         deepfakebench_root=DEEPFAKEBENCH_ROOT,
         weights_path=XCEPTION_WEIGHTS,
         output_dir=OUTPUT_DIR,
         seed=42,
-        device="auto",
+        device="cpu",
         save_images=True,
     )
     display(summary)
     print(OUTPUT_DIR / "results.csv")
     print(OUTPUT_DIR / "summary.json")
 else:
-    print("Set RUN_EVALUATION=True after configuring the four paths above.")"""),
+    print("Set RUN_EVALUATION=True to evaluate the configured checkpoint.")"""),
 ])

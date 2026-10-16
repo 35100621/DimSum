@@ -13,7 +13,7 @@ from gymnasium import spaces
 from PIL import Image
 from skimage.metrics import structural_similarity
 
-from .actions import ACTION_NAMES, apply_action
+from .actions import ACTION_NAMES, EXPANDED_ACTION_NAMES, apply_action
 
 
 LOGGER = logging.getLogger(__name__)
@@ -36,6 +36,9 @@ class DeepfakeAttackEnv(gym.Env[np.ndarray, np.ndarray]):
         perturbation_weight: float = 0.10,
         seed: int | None = None,
         strength_levels: int = N_STRENGTH_LEVELS,
+        action_set: str = "basic",
+        min_ssim: float | None = None,
+        quality_violation_penalty: float = 0.5,
     ) -> None:
         super().__init__()
         self.image_paths = [Path(path) for path in image_paths]
@@ -56,6 +59,10 @@ class DeepfakeAttackEnv(gym.Env[np.ndarray, np.ndarray]):
             raise ValueError("reward penalty weights must be non-negative")
         if not isinstance(strength_levels, Integral) or strength_levels < 2:
             raise ValueError("strength_levels must be an integer of at least 2")
+        if min_ssim is not None and not 0.0 < min_ssim <= 1.0:
+            raise ValueError("min_ssim must be in (0, 1]")
+        if quality_violation_penalty < 0:
+            raise ValueError("quality_violation_penalty must be non-negative")
 
         self.victim_detector = victim_detector
         self.image_size = (int(image_size[0]), int(image_size[1]))
@@ -64,7 +71,13 @@ class DeepfakeAttackEnv(gym.Env[np.ndarray, np.ndarray]):
         self.quality_weight = float(quality_weight)
         self.perturbation_weight = float(perturbation_weight)
         self.strength_levels = int(strength_levels)
-        self.action_space = spaces.MultiDiscrete([len(ACTION_NAMES), self.strength_levels])
+        if action_set not in {"basic", "expanded"}:
+            raise ValueError("action_set must be 'basic' or 'expanded'")
+        self.action_set = action_set
+        self.action_names = EXPANDED_ACTION_NAMES if action_set == "expanded" else ACTION_NAMES
+        self.min_ssim = min_ssim
+        self.quality_violation_penalty = float(quality_violation_penalty)
+        self.action_space = spaces.MultiDiscrete([len(self.action_names), self.strength_levels])
         self.observation_space = spaces.Box(0.0, 1.0, shape=(6,), dtype=np.float32)
         self._initial_seed = seed
 
@@ -159,19 +172,32 @@ class DeepfakeAttackEnv(gym.Env[np.ndarray, np.ndarray]):
         action_id, strength_level = (int(value) for value in action_array)
         strength = strength_level / (self.strength_levels - 1)
         previous_fake = float(self.current_prediction["fake_probability"])
-        candidate = apply_action(self.current_image, action_id, strength, rng=self.np_random)
+        candidate = apply_action(
+            self.current_image, action_id, strength, rng=self.np_random,
+            detector=self.victim_detector, expanded=self.action_set == "expanded",
+        )
         prediction = self._validate_prediction(self.victim_detector.predict_image(candidate))
-        ssim_score, perturbation = self._quality(self.original_image, candidate)
+        candidate_ssim, candidate_perturbation = self._quality(self.original_image, candidate)
+        quality_violation = bool(self.min_ssim is not None and candidate_ssim < self.min_ssim)
+        if quality_violation:
+            candidate = self.current_image.copy()
+            prediction = self.current_prediction.copy()
+            ssim_score, perturbation = self._quality(self.original_image, candidate)
+        else:
+            ssim_score, perturbation = candidate_ssim, candidate_perturbation
         confidence_gain = previous_fake - prediction["fake_probability"]
         attack_success = bool(
             self.initial_prediction["label"] == "FAKE"
             and self.current_prediction["label"] == "FAKE"
             and prediction["label"] == "REAL"
         )
-        reward = confidence_gain - self.quality_weight * (1.0 - ssim_score)
-        reward -= self.perturbation_weight * perturbation
-        if attack_success:
-            reward += 1.0
+        if quality_violation:
+            reward = -self.quality_violation_penalty
+        else:
+            reward = confidence_gain - self.quality_weight * (1.0 - ssim_score)
+            reward -= self.perturbation_weight * perturbation
+            if attack_success:
+                reward += 1.0
         reward = float(np.clip(reward, -2.0, 2.0))
 
         self.current_image = candidate
@@ -184,7 +210,7 @@ class DeepfakeAttackEnv(gym.Env[np.ndarray, np.ndarray]):
         truncated = bool(self.step_count >= self.max_steps and not terminated)
         info = {
             "image_path": str(self.current_image_path),
-            "action_name": ACTION_NAMES[action_id],
+            "action_name": self.action_names[action_id],
             "strength": float(strength),
             "step": self.step_count,
             "initial_fake_probability": float(self.initial_prediction["fake_probability"]),
@@ -193,6 +219,10 @@ class DeepfakeAttackEnv(gym.Env[np.ndarray, np.ndarray]):
             "current_real_probability": float(prediction["real_probability"]),
             "ssim": ssim_score,
             "perturbation": perturbation,
+            "candidate_ssim": candidate_ssim,
+            "candidate_perturbation": candidate_perturbation,
+            "quality_violation": quality_violation,
+            "action_applied": not quality_violation,
             "attack_success": attack_success,
         }
         return self._observation(), reward, terminated, truncated, info

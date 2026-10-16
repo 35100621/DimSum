@@ -4,9 +4,9 @@ project:
 
 victim:
   detector_name: xception
-  deepfakebench_root: ../DeepfakeBench
+  deepfakebench_root: ../DeepfakeBench_Handover
   config_path: null
-  weights_path: null
+  weights_path: ../DeepfakeBench_Handover/training/weights/xception_best.pth
 
 environment:
   image_width: 224
@@ -14,6 +14,7 @@ environment:
   max_steps: 5
   attack_target: fake_to_real
   strength_levels: 5
+  action_set: basic
   quality_weight: 0.25
   perturbation_weight: 0.10
 
@@ -28,6 +29,8 @@ ppo:
 
 training:
   total_timesteps: 10000
+  train_manifest: data/splits/ff_ppo_train.json
 
 evaluation:
   save_images: false
+  test_manifest: data/splits/ff_test.json

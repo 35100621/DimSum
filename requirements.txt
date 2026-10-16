@@ -5,6 +5,8 @@ stable-baselines3
 scikit-image
 pandas
 matplotlib
+scikit-learn
+tensorboard
 pytest
 opencv-python
 numpy=1.26.4

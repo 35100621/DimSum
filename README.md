@@ -17,10 +17,40 @@ Create an environment and install dependencies with `pip install -r requirements
 Edit only the path cell near the top of notebooks 01, 04, and 05. Training and test
 directories must remain separate.
 
+The Xception handover is integrated at `/Users/hgtan/Desktop/DeepfakeBench_Handover`.
+Its 200-image FF_small baseline can be reproduced without training:
+
+```bash
+python -m evaluation.evaluate_victim \
+  --deepfakebench-root ../DeepfakeBench_Handover \
+  --device cpu
+```
+
+See [docs/handover_integration.md](docs/handover_integration.md) for the extracted
+files, preprocessing contract, dependency decision, and reproduced metrics.
+
 The same workflow is available from the command line:
 
 ```bash
 python -m ppo.train --help
 python -m evaluation.evaluate_attack --help
 pytest -q
+```
+
+The checked-in split manifests contain 160 training records and 40 held-out test
+records. PPO uses the 80 labelled FAKE images in the training manifest:
+
+```bash
+python -m ppo.train \
+  --train-manifest data/splits/ff_ppo_train.json \
+  --deepfakebench-root ../DeepfakeBench_Handover \
+  --weights ../DeepfakeBench_Handover/training/weights/xception_best.pth \
+  --timesteps 10000 --device cpu
+
+python -m evaluation.evaluate_attack \
+  --test-manifest data/splits/ff_test.json \
+  --model outputs/checkpoints/ppo_final.zip \
+  --deepfakebench-root ../DeepfakeBench_Handover \
+  --weights ../DeepfakeBench_Handover/training/weights/xception_best.pth \
+  --device cpu
 ```

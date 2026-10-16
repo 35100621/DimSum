@@ -93,14 +93,25 @@ class VictimDetector:
     def _import_xception_class(self) -> type[torch.nn.Module]:
         """Import only Xception, avoiding optional dependencies of other detectors."""
         registry_module = importlib.import_module("metrics.registry")
-        registry = getattr(registry_module, "DETECTOR")
-        package = types.ModuleType("detectors")
-        package.__path__ = [str(self.training_dir / "detectors")]
-        package.__package__ = "detectors"
-        package.DETECTOR = registry
-        sys.modules["detectors"] = package
+        for package_name, registry_name, module_name in (
+            ("networks", "BACKBONE", "networks.xception"),
+            ("loss", "LOSSFUNC", "loss.cross_entropy_loss"),
+        ):
+            package = types.ModuleType(package_name)
+            package.__path__ = [str(self.training_dir / package_name)]
+            package.__package__ = package_name
+            setattr(package, registry_name, getattr(registry_module, registry_name))
+            sys.modules[package_name] = package
+            importlib.import_module(module_name)
+
+        detector_registry = getattr(registry_module, "DETECTOR")
+        detector_package = types.ModuleType("detectors")
+        detector_package.__path__ = [str(self.training_dir / "detectors")]
+        detector_package.__package__ = "detectors"
+        detector_package.DETECTOR = detector_registry
+        sys.modules["detectors"] = detector_package
         importlib.import_module("detectors.xception_detector")
-        return registry[self.detector_name]
+        return detector_registry[self.detector_name]
 
     def _load_model(self) -> torch.nn.Module:
         training_path = str(self.training_dir)
@@ -136,50 +147,79 @@ class VictimDetector:
             ) from error
         model.to(self.device)
         model.eval()
+        model.requires_grad_(False)
         return model
 
-    def _to_tensor(self, image: Image.Image | np.ndarray | torch.Tensor) -> torch.Tensor:
+    def preprocess_image(
+        self, image: Image.Image | np.ndarray | torch.Tensor
+    ) -> torch.Tensor:
+        """Convert an image to the exact tensor format used by the handover baseline.
+
+        Torch inputs retain their computation graph so gradient-based attacks can
+        differentiate with respect to the image while detector weights stay frozen.
+        """
         if isinstance(image, Image.Image):
-            array = np.asarray(image.convert("RGB"), dtype=np.float32)
-            tensor = torch.from_numpy(array.copy()).permute(2, 0, 1)
+            resized = image.convert("RGB").resize((224, 224))
+            array = np.asarray(resized) / 255.0
+            array = (array - np.asarray([0.485, 0.456, 0.406])) / np.asarray(
+                [0.229, 0.224, 0.225]
+            )
+            return torch.tensor(
+                np.transpose(array, (2, 0, 1)), dtype=torch.float32, device=self.device
+            ).unsqueeze(0)
         elif isinstance(image, np.ndarray):
             array = np.asarray(image)
             if array.ndim != 3 or array.shape[-1] not in {1, 3, 4}:
                 raise ValueError("NumPy image must have shape (H, W, C)")
             if array.shape[-1] == 1:
                 array = np.repeat(array, 3, axis=-1)
-            tensor = torch.from_numpy(array[..., :3].copy()).permute(2, 0, 1).float()
+            if np.issubdtype(array.dtype, np.floating) and array.max() <= 1.0:
+                array = array * 255.0
+            pil_image = Image.fromarray(np.clip(array[..., :3], 0, 255).astype(np.uint8))
+            return self.preprocess_image(pil_image)
         elif isinstance(image, torch.Tensor):
-            tensor = image.detach().clone().float()
-            if tensor.ndim == 4 and tensor.shape[0] == 1:
-                tensor = tensor.squeeze(0)
-            if tensor.ndim != 3:
-                raise ValueError("Torch image must have shape (C, H, W) or (1, C, H, W)")
-            if tensor.shape[0] not in {1, 3, 4}:
+            tensor = image.float()
+            if tensor.ndim not in {3, 4}:
+                raise ValueError("Torch image must have shape (C, H, W) or (B, C, H, W)")
+            channel_axis = 0 if tensor.ndim == 3 else 1
+            if tensor.shape[channel_axis] not in {1, 3, 4}:
                 raise ValueError("Torch image must have 1, 3, or 4 channels")
-            if tensor.shape[0] == 1:
-                tensor = tensor.repeat(3, 1, 1)
-            tensor = tensor[:3]
+            if tensor.shape[channel_axis] == 1:
+                repeats = (3, 1, 1) if tensor.ndim == 3 else (1, 3, 1, 1)
+                tensor = tensor.repeat(*repeats)
+            tensor = tensor[:3] if tensor.ndim == 3 else tensor[:, :3]
         else:
             raise TypeError("image must be a PIL image, NumPy array, or Torch tensor")
 
-        if tensor.max().item() > 1.0:
+        if not tensor.is_floating_point():
+            tensor = tensor.float()
+        if tensor.detach().max().item() > 1.0:
             tensor = tensor / 255.0
-        tensor = tensor.clamp(0.0, 1.0).unsqueeze(0)
-        resolution = int(self.config.get("resolution", 256))
+        tensor = tensor.clamp(0.0, 1.0)
+        if tensor.ndim == 3:
+            tensor = tensor.unsqueeze(0)
+        resolution = 224
         tensor = torch.nn.functional.interpolate(
             tensor, size=(resolution, resolution), mode="bilinear", align_corners=False
         )
-        mean = torch.tensor(self.config.get("mean", [0.5] * 3)).view(1, 3, 1, 1)
-        std = torch.tensor(self.config.get("std", [0.5] * 3)).view(1, 3, 1, 1)
+        mean = tensor.new_tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
+        std = tensor.new_tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
         return ((tensor - mean) / std).to(self.device)
 
-    def predict_image(
-        self, image: Image.Image | np.ndarray | torch.Tensor
-    ) -> dict[str, str | float]:
-        """Predict one image and return REAL/FAKE probabilities."""
-        tensor = self._to_tensor(image)
-        with torch.no_grad():
+    def predict_tensor(
+        self,
+        image: Image.Image | np.ndarray | torch.Tensor,
+        *,
+        differentiable: bool = False,
+    ) -> torch.Tensor:
+        """Return ``[P(REAL), P(FAKE)]`` tensors for inference or attacks.
+
+        Set ``differentiable=True`` for FGSM/PGD input gradients. The model remains
+        in evaluation mode and its parameters remain frozen in both modes.
+        """
+        tensor = self.preprocess_image(image)
+
+        def forward() -> torch.Tensor:
             output = self.model({"image": tensor}, inference=True)
             logits = output["cls"] if isinstance(output, dict) and "cls" in output else output
             if not isinstance(logits, torch.Tensor):
@@ -187,13 +227,23 @@ class VictimDetector:
             if logits.ndim == 1:
                 logits = logits.unsqueeze(0)
             if logits.shape[-1] == 2:
-                probabilities = torch.softmax(logits, dim=-1)[0]
-                real_probability, fake_probability = probabilities.tolist()
-            elif logits.shape[-1] == 1:
-                fake_probability = torch.sigmoid(logits.flatten()[0]).item()
-                real_probability = 1.0 - fake_probability
-            else:
-                raise RuntimeError("Victim detector output must contain one or two logits")
+                return torch.softmax(logits, dim=-1)
+            if logits.shape[-1] == 1:
+                fake = torch.sigmoid(logits)
+                return torch.cat((1.0 - fake, fake), dim=-1)
+            raise RuntimeError("Victim detector output must contain one or two logits")
+
+        if differentiable:
+            return forward()
+        with torch.no_grad():
+            return forward()
+
+    def predict_image(
+        self, image: Image.Image | np.ndarray | torch.Tensor
+    ) -> dict[str, str | float]:
+        """Predict one image and return REAL/FAKE probabilities."""
+        probabilities = self.predict_tensor(image, differentiable=False)[0]
+        real_probability, fake_probability = probabilities.tolist()
         total = float(real_probability + fake_probability)
         real_probability = float(np.clip(real_probability / total, 0.0, 1.0))
         fake_probability = float(np.clip(fake_probability / total, 0.0, 1.0))

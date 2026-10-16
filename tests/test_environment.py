@@ -61,3 +61,23 @@ def test_max_steps_truncates(image_path):
 
 def test_environment_passes_sb3_checker(image_path):
     check_env(DeepfakeAttackEnv([image_path], ImageVictim(), seed=42), warn=True)
+
+
+def test_hard_ssim_constraint_rejects_action_against_original(image_path):
+    env = DeepfakeAttackEnv(
+        [image_path], ImageVictim(), seed=42, min_ssim=0.99,
+        quality_violation_penalty=0.5,
+    )
+    env.reset()
+    before = np.asarray(env.current_image).copy()
+    _, reward, terminated, truncated, info = env.step(np.array([1, 4]))
+    np.testing.assert_array_equal(np.asarray(env.current_image), before)
+    assert info["quality_violation"] and not info["action_applied"]
+    assert info["candidate_ssim"] < 0.99 and info["ssim"] == pytest.approx(1.0)
+    assert reward == pytest.approx(-0.5)
+    assert not terminated and not truncated
+
+
+def test_ssim_constraint_validates_range(image_path):
+    with pytest.raises(ValueError):
+        DeepfakeAttackEnv([image_path], ImageVictim(), min_ssim=1.01)
