@@ -92,7 +92,7 @@ def train_attack(
     )
     detector = VictimDetector(
         deepfakebench_root=deepfakebench_root,
-        detector_name=victim_config.get("detector_name", "xception"),
+        detector_name=victim_config.get("detector_name", "resnet34"),
         config_path=victim_config.get("config_path"),
         weights_path=weights_path,
         device=effective_device,
@@ -175,7 +175,7 @@ def build_parser() -> argparse.ArgumentParser:
     source.add_argument("--train-dir", help="Directory containing training images.")
     source.add_argument("--train-manifest", help="JSON split manifest; only labelled FAKE rows train PPO.")
     parser.add_argument("--deepfakebench-root", required=True, help="DeepfakeBench repository root.")
-    parser.add_argument("--weights", required=True, help="Trained Xception checkpoint path.")
+    parser.add_argument("--weights", required=True, help="Trained ResNet34 checkpoint path.")
     parser.add_argument("--config", default=str(DEFAULT_CONFIG), help="DimSum YAML configuration path.")
     parser.add_argument("--timesteps", type=int, help="PPO training timesteps (overrides config).")
     parser.add_argument("--max-steps", type=int, help="Maximum attack steps per episode.")

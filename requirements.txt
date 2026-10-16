@@ -9,7 +9,7 @@ scikit-learn
 tensorboard
 pytest
 opencv-python
-numpy=1.26.4
+numpy==1.23.5
 pillow
 pyyaml
 simplejson
@@ -22,7 +22,7 @@ kornia
 imageio
 loralib
 einops
-albumentations
 dlib-bin
 imgaug
 lmdb
+albumentations==1.3.1

@@ -30,7 +30,7 @@ def resolve_device(device: str) -> torch.device:
 
 
 class VictimDetector:
-    """Load DeepfakeBench Xception once and expose normalized predictions.
+    """Load DeepfakeBench ResNet once and expose normalized predictions.
 
     The wrapper owns all detector-specific imports and preprocessing. DeepfakeBench
     labels class 0 as REAL and class 1 as FAKE.
@@ -39,13 +39,13 @@ class VictimDetector:
     def __init__(
         self,
         deepfakebench_root: str | Path,
-        detector_name: str = "xception",
+        detector_name: str = "resnet34",
         config_path: str | Path | None = None,
         weights_path: str | Path | None = None,
         device: str = "auto",
     ) -> None:
-        if detector_name != "xception":
-            raise ValueError("This integration currently supports detector_name='xception'")
+        if detector_name != "resnet34":
+            raise ValueError("This integration currently supports detector_name='resnet34'")
         self.root = Path(deepfakebench_root).expanduser().resolve()
         if not self.root.is_dir():
             raise FileNotFoundError(f"DeepfakeBench directory not found: {self.root}")
@@ -55,13 +55,13 @@ class VictimDetector:
                 f"DeepfakeBench training directory not found: {self.training_dir}"
             )
         self.config_path = Path(config_path).expanduser().resolve() if config_path else (
-            self.training_dir / "config" / "detector" / "xception.yaml"
+            self.training_dir / "config" / "detector" / "resnet34.yaml"
         )
         if not self.config_path.is_file():
             raise FileNotFoundError(f"Victim detector config not found: {self.config_path}")
         if weights_path is None:
             raise FileNotFoundError(
-                "Victim detector weights not configured. Expected Xception checkpoint "
+                "Victim detector weights not configured. Expected CNN-Aug checkpoint "
                 "configured by victim.weights_path."
             )
         self.weights_path = Path(weights_path).expanduser().resolve()
@@ -90,57 +90,62 @@ class VictimDetector:
             config["pretrained"] = str(pretrained_path.resolve())
         return config
 
-    def _import_xception_class(self) -> type[torch.nn.Module]:
-        """Import only Xception, avoiding optional dependencies of other detectors."""
+    def _import_resnet_class(self) -> type[torch.nn.Module]:
+        """Import only ResNet, avoiding optional dependencies of other detectors."""
         registry_module = importlib.import_module("metrics.registry")
-        for package_name, registry_name, module_name in (
-            ("networks", "BACKBONE", "networks.xception"),
-            ("loss", "LOSSFUNC", "loss.cross_entropy_loss"),
-        ):
-            package = types.ModuleType(package_name)
-            package.__path__ = [str(self.training_dir / package_name)]
-            package.__package__ = package_name
-            setattr(package, registry_name, getattr(registry_module, registry_name))
-            sys.modules[package_name] = package
-            importlib.import_module(module_name)
-
-        detector_registry = getattr(registry_module, "DETECTOR")
-        detector_package = types.ModuleType("detectors")
-        detector_package.__path__ = [str(self.training_dir / "detectors")]
-        detector_package.__package__ = "detectors"
-        detector_package.DETECTOR = detector_registry
-        sys.modules["detectors"] = detector_package
-        importlib.import_module("detectors.xception_detector")
-        return detector_registry[self.detector_name]
+        registry = getattr(registry_module, "DETECTOR")
+        package = types.ModuleType("detectors")
+        package.__path__ = [str(self.training_dir / "detectors")]
+        package.__package__ = "detectors"
+        package.DETECTOR = registry
+        sys.modules["detectors"] = package
+        importlib.import_module("detectors.resnet34_detector")
+        return registry[self.detector_name]
 
     def _load_model(self) -> torch.nn.Module:
         training_path = str(self.training_dir)
         if training_path not in sys.path:
             sys.path.insert(0, training_path)
         try:
-            model_class = self._import_xception_class()
+            model_class = self._import_resnet_class()
             model = model_class(self.config)
         except Exception as error:
             raise RuntimeError(
-                "Failed to construct DeepfakeBench Xception. Check its dependencies "
+                "Failed to construct DeepfakeBench ResNet34. Check its dependencies "
                 f"and detector config at: {self.config_path}"
             ) from error
-
+        
         try:
             checkpoint = torch.load(
-                self.weights_path, map_location=self.device, weights_only=False
+                self.weights_path,
+                map_location=self.device
             )
-            if isinstance(checkpoint, dict):
-                for key in ("state_dict", "model", "model_state_dict"):
-                    if key in checkpoint and isinstance(checkpoint[key], dict):
-                        checkpoint = checkpoint[key]
-                        break
-            if not isinstance(checkpoint, dict):
-                raise TypeError("checkpoint does not contain a state dictionary")
-            state_dict = {
-                key.removeprefix("module."): value for key, value in checkpoint.items()
-            }
-            model.load_state_dict(state_dict, strict=True)
+
+            # DeepfakeBench CNN-Aug saves pure state_dict
+            if isinstance(checkpoint, dict) and "state_dict" in checkpoint:
+                checkpoint = checkpoint["state_dict"]
+
+            elif isinstance(checkpoint, dict) and "model" in checkpoint:
+                checkpoint = checkpoint["model"]
+
+            model.load_state_dict(
+                checkpoint,
+                strict=False
+            )
+            # checkpoint = torch.load(
+            #     self.weights_path, map_location=self.device, weights_only=False
+            # )
+            # if isinstance(checkpoint, dict):
+            #     for key in ("state_dict", "model", "model_state_dict"):
+            #         if key in checkpoint and isinstance(checkpoint[key], dict):
+            #             checkpoint = checkpoint[key]
+            #             break
+            # if not isinstance(checkpoint, dict):
+            #     raise TypeError("checkpoint does not contain a state dictionary")
+            # state_dict = {
+            #     key.removeprefix("module."): value for key, value in checkpoint.items()
+            # }
+            # model.load_state_dict(state_dict, strict=True)
         except Exception as error:
             raise RuntimeError(
                 f"Failed to load victim detector weights: {self.weights_path}"

@@ -3,8 +3,8 @@ project:
   device: auto
 
 victim:
-  detector_name: xception
-  deepfakebench_root: ../DeepfakeBench_Handover
+  detector_name: resnet34
+  deepfakebench_root: ../DeepfakeBench
   config_path: null
   weights_path: ../DeepfakeBench_Handover/training/weights/xception_best.pth
 
